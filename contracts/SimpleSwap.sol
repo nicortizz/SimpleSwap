@@ -32,14 +32,14 @@ contract SimpleSwap is ERC20 {
      * @param to Recipient address of LP tokens
      * @param deadline Expiry timestamp
      */
-    function addLiquidity(
+    function _addLiquidity(
         uint amountADesired,
         uint amountBDesired,
         uint amountAMin,
         uint amountBMin,
         address to,
         uint deadline
-    ) external returns (uint amountA, uint amountB, uint liquidity) {
+    ) internal returns (uint amountA, uint amountB, uint liquidity) {
         require(block.timestamp <= deadline, "Deadline passed");
 
         if (totalSupply() == 0) {
@@ -85,13 +85,13 @@ contract SimpleSwap is ERC20 {
      * @param to Recipient address
      * @param deadline Expiry timestamp
      */
-    function removeLiquidity(
+    function _removeLiquidity(
         uint liquidity,
         uint amountAMin,
         uint amountBMin,
         address to,
         uint deadline
-    ) external returns (uint amountA, uint amountB) {
+    ) internal returns (uint amountA, uint amountB) {
         require(block.timestamp <= deadline, "Deadline passed");
 
         uint total = totalSupply();
@@ -109,6 +109,55 @@ contract SimpleSwap is ERC20 {
 
         IERC20(tokenA).transfer(to, amountA);
         IERC20(tokenB).transfer(to, amountB);
+    }
+
+    /// @notice Wrapper to match SwapVerifier interface
+    function addLiquidity(
+        address _tokenA,
+        address _tokenB,
+        uint amountADesired,
+        uint amountBDesired,
+        uint amountAMin,
+        uint amountBMin,
+        address to,
+        uint deadline
+    )
+        external
+        returns (uint amountA, uint amountB, uint liquidity)
+    {
+        require(_tokenA == tokenA && _tokenB == tokenB, "Invalid token pair");
+        // Llamada interna directa, preserva msg.sender = SwapVerifier
+        return _addLiquidity(
+            amountADesired,
+            amountBDesired,
+            amountAMin,
+            amountBMin,
+            to,
+            deadline
+        );
+    }
+
+    /// @notice Wrapper to match SwapVerifier interface
+    function removeLiquidity(
+        address _tokenA,
+        address _tokenB,
+        uint liquidity,
+        uint amountAMin,
+        uint amountBMin,
+        address to,
+        uint deadline
+    )
+        external
+        returns (uint amountA, uint amountB)
+    {
+        require(_tokenA == tokenA && _tokenB == tokenB, "Invalid token pair");
+        return _removeLiquidity(
+            liquidity,
+            amountAMin,
+            amountBMin,
+            to,
+            deadline
+        );
     }
 
     /**
@@ -167,13 +216,23 @@ contract SimpleSwap is ERC20 {
         }
     }
 
-    /// @notice Calculate amount of output tokens given input
-    function getAmountOut(uint amountIn, uint reserveIn, uint reserveOut) public pure returns (uint amountOut) {
+    /// @notice Calculate amount of output tokens given input, with 1 wei slippage buffer
+    function getAmountOut(
+        uint amountIn,
+        uint reserveIn,
+        uint reserveOut
+    ) public pure returns (uint amountOut) {
         require(amountIn > 0 && reserveIn > 0 && reserveOut > 0, "Invalid input");
+    
         uint amountInWithFee = amountIn * 997;
         uint numerator = amountInWithFee * reserveOut;
         uint denominator = reserveIn * 1000 + amountInWithFee;
         amountOut = numerator / denominator;
+    
+        // Subtract 1 wei to avoid exact-rounding reverts on slippage
+        if (amountOut > 0) {
+            amountOut -= 1;
+        }
     }
 
     /// @notice Internal helper to get square root (Babylonian method)

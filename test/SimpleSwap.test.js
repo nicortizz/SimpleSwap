@@ -6,31 +6,33 @@ describe("SimpleSwap Integration Test", function () {
   let owner, addr1;
 
   beforeEach(async () => {
-  [owner, addr1] = await ethers.getSigners();
+    [owner, addr1] = await ethers.getSigners();
 
-  // Deploy mock tokens
-  TokenA = await ethers.getContractFactory("MockERC20");
-  TokenB = await ethers.getContractFactory("MockERC20");
-  tokenA = await TokenA.deploy("Token A", "TKA", ethers.utils.parseEther("1000000"));
-  tokenB = await TokenB.deploy("Token B", "TKB", ethers.utils.parseEther("1000000"));
+    // Deploy mock tokens
+    TokenA = await ethers.getContractFactory("MockERC20");
+    TokenB = await ethers.getContractFactory("MockERC20");
+    tokenA = await TokenA.deploy("Token A", "TKA", ethers.utils.parseEther("1000000"));
+    tokenB = await TokenB.deploy("Token B", "TKB", ethers.utils.parseEther("1000000"));
 
-  // Deploy swap contract with token addresses
-  const SimpleSwap = await ethers.getContractFactory("SimpleSwap");
-  swap = await SimpleSwap.deploy(tokenA.address, tokenB.address);
+    // Deploy swap contract with token addresses
+    const SimpleSwap = await ethers.getContractFactory("SimpleSwap");
+    swap = await SimpleSwap.deploy(tokenA.address, tokenB.address);
 
-  // Approve and add liquidity
-  await tokenA.approve(swap.address, ethers.utils.parseEther("1000"));
-  await tokenB.approve(swap.address, ethers.utils.parseEther("1000"));
+    // Approve and add liquidity
+    await tokenA.approve(swap.address, ethers.utils.parseEther("1000"));
+    await tokenB.approve(swap.address, ethers.utils.parseEther("1000"));
 
-  await swap.addLiquidity(
-    ethers.utils.parseEther("1000"),
-    ethers.utils.parseEther("1000"),
-    ethers.utils.parseEther("900"),
-    ethers.utils.parseEther("900"),
-    owner.address,
-    Math.floor(Date.now() / 1000) + 60
-  );
-});
+    await swap.addLiquidity(
+      tokenA.address,
+      tokenB.address,
+      ethers.utils.parseEther("1000"),
+      ethers.utils.parseEther("1000"),
+      ethers.utils.parseEther("900"),
+      ethers.utils.parseEther("900"),
+      owner.address,
+      Math.floor(Date.now() / 1000) + 60
+    );
+  });
 
   it("should perform a token swap", async () => {
     // Transfer TokenA to addr1 and approve
@@ -57,6 +59,8 @@ describe("SimpleSwap Integration Test", function () {
     await swap.approve(swap.address, lpBalance);
     
     const tx = await swap.removeLiquidity(
+      tokenA.address,
+      tokenB.address,
       lpBalance,
       ethers.utils.parseEther("900"),
       ethers.utils.parseEther("900"),

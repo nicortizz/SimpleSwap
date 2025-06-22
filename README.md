@@ -22,6 +22,7 @@ contracts/
 └── MockERC20.sol             ← ERC-20 tokens for testing
 
 scripts/
+├── deploySwapContract.js
 ├── deployFactory.js
 ├── deployTokens.js
 ├── createPool.js
@@ -128,11 +129,57 @@ npx hardhat run scripts/getAmountOut.js --network sepolia
 
 ---
 
+⚠️ Alternative design notes: tokenA and tokenB could not be function parameters
+In the SimpleSwap contract, the token pair (tokenA and tokenB) could be set only once in the constructor during implementation and stored as immutable state variables. Therefore, functions like addLiquidity, removeLiquidity, and getPrice would not require tokenA and tokenB as input parameters.
+
+This design choice guarantees:
+
+• ✅ Safety: only the predefined pair can be interacted with
+
+• ✅ Simplicity: reduces user input errors and attack surface
+
+• ✅ Consistency: LP tokens issued by the contract always represent the same pair
+
+Uniswap V2's Router uses parameters to support any pair via a factory, but since this project focuses on a simplified, pair-specific swap, passing token addresses is unnecessary.
+
+---
+
 ## 📝 Notes
 
 - All contracts are documented using NatSpec-style comments.
 - Functions are structured to mirror Uniswap V2’s logic in a simplified way.
 - Reserves are tracked manually within the contract.
+
+---
+
+## 🧪 Script: `verifySwap.js`
+
+This script performs an end-to-end verification of the `SimpleSwap` contract to ensure it behaves correctly under basic liquidity and swap operations. It is designed to work alongside the `SwapVerifier.sol` contract.
+
+### ✅ What does it verify?
+
+The script automatically performs the following steps:
+
+1. Transfers test tokens (`tokenA` and `tokenB`) to the verifier contract.
+2. Calls `addLiquidity()` on the `SimpleSwap` contract and verifies the liquidity is added correctly.
+3. Calls `getPrice()` and checks that the returned price matches expectations.
+4. Executes a token swap using `swapExactTokensForTokens()` and verifies that the expected amount is received.
+5. Calls `removeLiquidity()` and checks that the correct token amounts are returned.
+6. Registers the contract author's name if all checks pass successfully.
+
+### 🔧 Requirements
+
+- The `SimpleSwap` contract must be deployed.
+- The `SwapVerifier` contract must also be deployed.
+- Two compatible ERC20 token contracts (`tokenA` and `tokenB`) must be deployed — ideally with a `mint()` function for local testing.
+- The script expects contracts to be accessible from the `artifacts/` folder and the network to be properly configured.
+
+### 🚀 How to run
+
+```bash
+npx hardhat run scripts/verifySwap.js --network <network-name>
+```
+
 
 ---
 
@@ -181,6 +228,7 @@ Now you can run scripts normally and the keys will be read securely from `.env.t
 An integration test is included to validate core functionality such as liquidity provision and token swapping.
 
 📄 test/SimpleSwap.test.js
+
 This test suite includes:
 
 • ✅ Deploying mock tokens and the swap contract
@@ -202,12 +250,15 @@ npx hardhat test
 ✅ Sample output:
 ```pgsql
   SimpleSwap Integration Test
-TokenB received: 90.123456
-AmountOut for 100 TokenA: 90.123456
-    ✔ should perform a token swap
-    ✔ should remove liquidity and return tokens
+TokenB received: 90.661089388014913157
+    ✔ should perform a token swap (92ms)
+    ✔ should remove liquidity and return tokens (59ms)
     ✔ should return correct price between tokens
-    ✔ should calculate output amount correctly
+AmountOut for 100 TokenA: 90.661089388014913157
+    ✔ should calculate output amount correctly (41ms)
+
+
+  4 passing (2s)
 ```
 Ensure your test uses ethers.utils.parseEther(...) or ethers.parseUnits(...) according to your Hardhat version.
 

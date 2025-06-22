@@ -1,9 +1,9 @@
 const hre = require("hardhat");
 
 async function main() {
-  const factoryAddress = "0x8B2322edfD7a7FEA878A0C938C51f6781d46e30a";
-  const tokenA = "0x87520F3d6D9D909F0304475E09e3AeB1B0429d21";
-  const tokenB = "0x5C14D4AcD5921ecdC2C75155EB0a2A28269C6f45";
+  const factoryAddress = "0xC69eBA5080a102a2E3D3b2E6a3309145e1804048";
+  const tokenA = "0x8961c68D6dE7559ef44B457D0b1be37B33465FDc";
+  const tokenB = "0xb7475a8FB10E7c57156244463738671c38615cB6";
 
   const Factory = await hre.ethers.getContractAt("SimpleSwapFactory", factoryAddress);
 
