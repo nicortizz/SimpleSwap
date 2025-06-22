@@ -128,6 +128,21 @@ npx hardhat run scripts/getAmountOut.js --network sepolia
 
 ---
 
+⚠️ Design Notes: Why tokenA and tokenB Are Not Function Parameters
+In the SimpleSwap contract, the token pair (tokenA and tokenB) is set once in the constructor at deployment time and stored as immutable state variables. Therefore, the functions like addLiquidity, removeLiquidity, and getPrice do not accept tokenA and tokenB as input parameters.
+
+This design choice ensures:
+
+• ✅ Safety: only the predefined pair can be interacted with
+
+• ✅ Simplicity: reduces user input errors and attack surface
+
+• ✅ Consistency: LP tokens issued by the contract always represent the same pair
+
+Uniswap V2's Router uses parameters to support any pair via a factory, but since this project focuses on a simplified, pair-specific swap, passing token addresses is unnecessary.
+
+---
+
 ## 📝 Notes
 
 - All contracts are documented using NatSpec-style comments.
@@ -181,6 +196,7 @@ Now you can run scripts normally and the keys will be read securely from `.env.t
 An integration test is included to validate core functionality such as liquidity provision and token swapping.
 
 📄 test/SimpleSwap.test.js
+
 This test suite includes:
 
 • ✅ Deploying mock tokens and the swap contract
