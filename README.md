@@ -45,8 +45,11 @@ scripts/
 Install dependencies:
 
 ```bash
-npm install
-npm install @openzeppelin/contracts
+npm install --save-dev hardhat@^2.24.1 \
+  @nomicfoundation/hardhat-toolbox@^2.0.1 \
+  ethers@^5.4.7 \
+  dotenv \
+  @openzeppelin/contracts@^5.3.0
 ```
 
 ---
@@ -57,14 +60,20 @@ Edit your `hardhat.config.js`:
 
 ```js
 require("@nomicfoundation/hardhat-toolbox");
+require("dotenv").config({ path: ".env.tst" });
 
 module.exports = {
   solidity: "0.8.20",
   networks: {
     sepolia: {
-      url: "https://sepolia.infura.io/v3/YOUR_INFURA_PROJECT_ID",
-      accounts: ["0xYOUR_PRIVATE_KEY"]
+      url: process.env.INFURA_API_KEY
+        ? `https://sepolia.infura.io/v3/${process.env.INFURA_API_KEY}`
+        : "",
+      accounts: process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : []
     }
+  },
+  etherscan: {
+    apiKey: process.env.ETHERSCAN_API_KEY || ""
   }
 };
 ```
@@ -188,7 +197,7 @@ npx hardhat run scripts/verifySwap.js --network <network-name>
 Manual verification via Hardhat:
 
 ```bash
-npx hardhat verify --network sepolia DEPLOYED_ADDRESS "arg1" "arg2"
+npx hardhat verify --network sepolia DEPLOYED_ADDRESS "tokenA_address" "tokenB_address"
 ```
 
 ---
