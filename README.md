@@ -260,17 +260,70 @@ npx hardhat test
 ✅ Sample output:
 ```pgsql
   SimpleSwap Integration Test
-TokenB received: 90.661089388014913157
-    ✔ should perform a token swap (92ms)
-    ✔ should remove liquidity and return tokens (59ms)
+    ✔ should revert if identical token addresses are passed to constructor
+    ✔ should support reversed token order in addLiquidity (66ms)
+    ✔ should revert if deadline passed in addLiquidity (40ms)
+TokenB received: 90.661089388014913158
+    ✔ should perform a token swap (88ms)
+    ✔ should remove liquidity and return tokens (56ms)
+    ✔ should revert if deadline passed in swap (75ms)
+    ✔ should return reverse price of tokenB in terms of tokenA (176ms)
     ✔ should return correct price between tokens
-AmountOut for 100 TokenA: 90.661089388014913157
-    ✔ should calculate output amount correctly (41ms)
+    ✔ should return price of tokenB in terms of tokenA
+AmountOut for 100 TokenA: 90.661089388014913158
+    ✔ should calculate output amount correctly
+    ✔ should revert on getAmountOut with zero input
+    ✔ should revert on getAmountOut with zero reserveIn
+    ✔ should revert on getAmountOut with zero reserveOut
+    ✔ should emit LiquidityAdded event (51ms)
+    ✔ should emit LiquidityAdded event (49ms)
+    ✔ should emit LiquidityRemoved event
 
 
-  4 passing (2s)
+  16 passing (5s)
 ```
 Ensure your test uses ethers.utils.parseEther(...) or ethers.parseUnits(...) according to your Hardhat version.
+
+---
+
+## 🧪 Running Tests
+
+The project uses solidity-coverage to measure how much of your smart contract code is exercised by your tests.
+
+▶️ Run Coverage Report
+```bash
+npx hardhat coverage
+```
+This will output a summary like:
+------------------------|----------|----------|----------|----------|----------------|
+File                    |  % Stmts | % Branch |  % Funcs |  % Lines |Uncovered Lines |
+------------------------|----------|----------|----------|----------|----------------|
+ contracts\             |    80.65 |    55.88 |    78.57 |    79.79 |                |
+  MockERC20.sol         |      100 |      100 |      100 |      100 |                |
+  SimpleSwap.sol        |    92.45 |    63.33 |    90.91 |    90.24 |... 231,232,276 |
+  SimpleSwapFactory.sol |        0 |        0 |        0 |        0 |... 36,38,40,45 |
+------------------------|----------|----------|----------|----------|----------------|
+All files               |    80.65 |    55.88 |    78.57 |    79.79 |                |
+------------------------|----------|----------|----------|----------|----------------|
+
+📁 A full HTML report is also saved to:
+```bash
+coverage/index.html
+```
+
+🔧 Install (if not installed)
+```bash
+npm install --save-dev solidity-coverage
+```
+
+📌 Tip
+To increase coverage, ensure you test:
+
+• require(...) reverts
+
+• Invalid inputs and edge cases
+
+• Different branches (e.g., optimal path vs fallback path in _addLiquidity())
 
 ---
 
@@ -287,3 +340,7 @@ Ensure your test uses ethers.utils.parseEther(...) or ethers.parseUnits(...) acc
 Nicolás Ortiz  
 2025 · Blockchain | SimpleSwap Project
 ---
+
+## 📄 License
+
+This project is licensed under the MIT License.
