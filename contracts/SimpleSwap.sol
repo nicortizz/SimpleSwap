@@ -9,6 +9,11 @@ import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
  * @dev A minimal decentralized exchange contract similar to Uniswap V2
  */
 contract SimpleSwap is ERC20 {
+
+    event LiquidityAdded(address indexed provider, uint amountA, uint amountB, uint liquidity);
+    event LiquidityRemoved(address indexed provider, uint amountA, uint amountB, uint liquidity);
+    event TokenSwapped(address indexed sender, address indexed inputToken, address indexed outputToken, uint amountIn, uint amountOut, address to);
+
     address public tokenA;
     address public tokenB;
 
@@ -21,6 +26,10 @@ contract SimpleSwap is ERC20 {
         require(_tokenA != _tokenB, "Identical tokens");
         tokenA = _tokenA;
         tokenB = _tokenB;
+    }
+
+    function getReserves() external view returns (uint _reserveA, uint _reserveB) {
+        return (reserveA, reserveB);
     }
 
     /**
@@ -74,6 +83,7 @@ contract SimpleSwap is ERC20 {
         _mint(to, liquidity);
 
         reserveA += amountA;
+        emit LiquidityAdded(to, amountA, amountB, liquidity);
         reserveB += amountB;
     }
 
@@ -109,6 +119,7 @@ contract SimpleSwap is ERC20 {
 
         IERC20(tokenA).transfer(to, amountA);
         IERC20(tokenB).transfer(to, amountB);
+        emit LiquidityRemoved(msg.sender, amountA, amountB, liquidity);
     }
 
     /// @notice Wrapper to match SwapVerifier interface
@@ -125,16 +136,32 @@ contract SimpleSwap is ERC20 {
         external
         returns (uint amountA, uint amountB, uint liquidity)
     {
-        require(_tokenA == tokenA && _tokenB == tokenB, "Invalid token pair");
-        // Llamada interna directa, preserva msg.sender = SwapVerifier
-        return _addLiquidity(
-            amountADesired,
-            amountBDesired,
-            amountAMin,
-            amountBMin,
-            to,
-            deadline
+        require(
+            (_tokenA == tokenA && _tokenB == tokenB) ||
+            (_tokenA == tokenB && _tokenB == tokenA),
+            "Invalid token pair"
         );
+        // reorder if necessary
+        if (_tokenA == tokenA && _tokenB == tokenB) {
+            return _addLiquidity(
+                amountADesired,
+                amountBDesired,
+                amountAMin,
+                amountBMin,
+                to,
+                deadline
+            );
+        } else {
+            // reverse amounts and minimums
+            return _addLiquidity(
+                amountBDesired,
+                amountADesired,
+                amountBMin,
+                amountAMin,
+                to,
+                deadline
+            );
+        }
     }
 
     /// @notice Wrapper to match SwapVerifier interface
@@ -150,7 +177,11 @@ contract SimpleSwap is ERC20 {
         external
         returns (uint amountA, uint amountB)
     {
-        require(_tokenA == tokenA && _tokenB == tokenB, "Invalid token pair");
+        require(
+            (_tokenA == tokenA && _tokenB == tokenB) ||
+            (_tokenA == tokenB && _tokenB == tokenA),
+            "Invalid token pair"
+        );
         return _removeLiquidity(
             liquidity,
             amountAMin,
@@ -204,6 +235,8 @@ contract SimpleSwap is ERC20 {
         amounts = new uint256[](2);
         amounts[0] = amountIn;
         amounts[1] = amountOut;
+
+        emit TokenSwapped(msg.sender, input, output, amountIn, amountOut, to);
     }
 
     /// @notice Returns the price of tokenA in terms of tokenB
@@ -216,7 +249,7 @@ contract SimpleSwap is ERC20 {
         }
     }
 
-    /// @notice Calculate amount of output tokens given input, with 1 wei slippage buffer
+    /// @notice Calculate amount of output tokens given input
     function getAmountOut(
         uint amountIn,
         uint reserveIn,
@@ -228,11 +261,6 @@ contract SimpleSwap is ERC20 {
         uint numerator = amountInWithFee * reserveOut;
         uint denominator = reserveIn * 1000 + amountInWithFee;
         amountOut = numerator / denominator;
-    
-        // Subtract 1 wei to avoid exact-rounding reverts on slippage
-        if (amountOut > 0) {
-            amountOut -= 1;
-        }
     }
 
     /// @notice Internal helper to get square root (Babylonian method)

@@ -8,8 +8,8 @@ async function main() {
   console.log("💰 Deployer balance:", hre.ethers.utils.formatEther(balance), "ETH");
 
   // Addresses of tokens A and B (replace with real or mock tokens)
-  const tokenA = "0x8961c68D6dE7559ef44B457D0b1be37B33465FDc";
-  const tokenB = "0xb7475a8FB10E7c57156244463738671c38615cB6";
+  const tokenA = "0x96BeA8d5DeE702e47C604f17c950Ca19F3A8Fcab";
+  const tokenB = "0x74a83799CEFCE8f520136DF7DeBd8D01d7e46DdF";
 
   // Fast validation 
   if (tokenA.toLowerCase() === tokenB.toLowerCase()) {

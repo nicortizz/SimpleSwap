@@ -4,10 +4,10 @@ const { ethers } = require("hardhat");
 
 async function main() {
   // 1) Your deployed Factory
-  const factoryAddress  = "0xC69eBA5080a102a2E3D3b2E6a3309145e1804048";
+  const factoryAddress  = "0x7163380DA11EeA66582F22874a524Ad5ED4173A6";
   // 2) Your tokens
-  const tokenAAddress   = "0x8961c68D6dE7559ef44B457D0b1be37B33465FDc";
-  const tokenBAddress   = "0xb7475a8FB10E7c57156244463738671c38615cB6";
+  const tokenAAddress   = "0x96BeA8d5DeE702e47C604f17c950Ca19F3A8Fcab";
+  const tokenBAddress   = "0x74a83799CEFCE8f520136DF7DeBd8D01d7e46DdF";
   // 3) Official SwapVerifier
   const verifierAddress = "0x9f8f02dab384dddf1591c3366069da3fb0018220";
 
